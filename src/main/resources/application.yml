@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: agent
+  ai:
+    openai:
+      api-key: test-key
+      base-url: https://api.openai.com
+      chat:
+        options:
+          model: gpt-4
+          temperature: 0.7
+          max-tokens: 2000
+
+# MCP 설정
+app:
+  mcp:
+    config-path: mcp-servers.json
+    enabled: true
+
+# 서버 설정
+server:
+  port: 8081
+
+# 로깅 설정
+logging:
+  level:
+    com.ocean.agent: INFO
+    org.springframework.ai: INFO
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:test-key}
+      base-url: https://api.openai.com
+
+# MCP 개발 설정
+app:
+  mcp:
+    config-path: mcp-servers-dev.json
+    enabled: true
+
+logging:
+  level:
+    com.ocean.agent: DEBUG
+    org.springframework.ai: DEBUG
+    org.springframework.web: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      base-url: https://api.openai.com
+
+# MCP 운영 설정
+app:
+  mcp:
+    config-path: /etc/agent/mcp-servers.json
+    enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.ocean.agent: INFO

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent - MCP 통합 채팅</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <header class="header">
+            <h1>🤖 AI Agent</h1>
+            <div class="header-controls">
+                <button id="toggleMcpPanel" class="btn btn-secondary">MCP 관리</button>
+                <button id="clearChat" class="btn btn-outline">대화 삭제</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- MCP 관리 패널 -->
+            <aside id="mcpPanel" class="mcp-panel">
+                <div class="panel-header">
+                    <h3>MCP 서버 관리</h3>
+                    <button id="addMcpServer" class="btn btn-primary btn-sm">+ 서버 추가</button>
+                </div>
+                
+                <div class="mcp-servers" id="mcpServersList">
+                    <!-- MCP 서버 목록이 여기에 동적으로 추가됩니다 -->
+                </div>
+                
+                <div class="panel-section">
+                    <h4>사용 가능한 도구</h4>
+                    <div class="mcp-tools" id="mcpToolsList">
+                        <!-- MCP 도구 목록이 여기에 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 채팅 영역 -->
+            <main class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="welcome-message">
+                        <h2>🌟 AI Agent에 오신 것을 환영합니다!</h2>
+                        <p>저는 MCP(Model Context Protocol)를 지원하는 AI 어시스턴트입니다.</p>
+                        <div class="feature-list">
+                            <div class="feature-item">
+                                <span class="feature-icon">📁</span>
+                                <span>파일 시스템 접근</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🔍</span>
+                                <span>웹 검색</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🔧</span>
+                                <span>확장 가능한 도구</span>
+                            </div>
+                        </div>
+                        <p>무엇을 도와드릴까요?</p>
+                    </div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="메시지를 입력하세요..." 
+                            rows="1"
+                        ></textarea>
+                        <button id="sendButton" class="send-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="input-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="useTools" checked>
+                            <span>MCP 도구 사용</span>
+                        </label>
+                        <span class="status" id="connectionStatus">연결됨</span>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MCP 서버 추가 모달 -->
+    <div id="mcpModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>MCP 서버 추가</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="mcpServerForm">
+                    <div class="form-group">
+                        <label for="serverId">서버 ID</label>
+                        <input type="text" id="serverId" name="id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="serverName">서버 이름</label>
+                        <input type="text" id="serverName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="serverDescription">설명</label>
+                        <textarea id="serverDescription" name="description" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="serverCommand">실행 명령어</label>
+                        <input type="text" id="serverCommand" name="command" placeholder="예: node, python" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="serverArgs">인수 (쉼표로 구분)</label>
+                        <input type="text" id="serverArgs" name="args" placeholder="예: server.js, --port=3000">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="serverEnabled" name="enabled" checked>
+                            서버 활성화
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelModal">취소</button>
+                <button type="submit" form="mcpServerForm" class="btn btn-primary">추가</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
