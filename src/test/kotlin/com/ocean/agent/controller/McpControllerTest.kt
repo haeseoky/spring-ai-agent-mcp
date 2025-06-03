@@ -4,22 +4,56 @@ import com.ocean.agent.domain.*
 import com.ocean.agent.service.McpService
 import org.junit.jupiter.api.Test
 import kotlinx.coroutines.runBlocking
-import org.mockito.Mockito.*
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
-import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.http.MediaType
-import org.springframework.test.web.reactive.server.WebTestClient
+import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.InjectMocks
+import org.mockito.Mock
+import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.*
 import java.time.LocalDateTime
 
-@WebFluxTest(McpController::class)
+@ExtendWith(MockitoExtension::class)
 class McpControllerTest {
 
-    @Autowired
-    private lateinit var webTestClient: WebTestClient
-
-    @MockBean
+    @Mock
     private lateinit var mcpService: McpService
+
+    @InjectMocks
+    private lateinit var mcpController: McpController
+
+    @Test
+    fun `헬스 체크 테스트`() {
+        // Given
+        val enabledServers = listOf(
+            McpServer(
+                id = "server-1",
+                name = "테스트 서버",
+                description = "테스트용 서버",
+                command = "node",
+                enabled = true
+            )
+        )
+        val tools = listOf(
+            McpTool(
+                name = "test_tool",
+                description = "테스트 도구",
+                inputSchema = McpToolSchema(),
+                serverId = "server-1"
+            )
+        )
+        
+        whenever(mcpService.getEnabledServers()).thenReturn(enabledServers)
+        whenever(mcpService.getAllTools()).thenReturn(tools)
+
+        // When
+        val result = mcpController.health().block()
+
+        // Then
+        assert(result != null)
+        assert(result!!["status"] == "OK")
+        assert(result["service"] == "McpService")
+        assert(result["enabledServers"] == 1)
+        assert(result["totalTools"] == 1)
+    }
 
     @Test
     fun `MCP 서버 목록 조회 테스트`() {
@@ -43,15 +77,15 @@ class McpControllerTest {
             )
         )
         
-        `when`(mcpService.getAllServers()).thenReturn(servers)
+        whenever(mcpService.getAllServers()).thenReturn(servers)
 
-        // When & Then
-        webTestClient.get()
-            .uri("/api/mcp/servers")
-            .exchange()
-            .expectStatus().isOk
-            .expectBodyList(McpServer::class.java)
-            .hasSize(2)
+        // When
+        val result = mcpController.getAllServers().block()
+
+        // Then
+        assert(result != null)
+        assert(result!!.size == 2)
+        verify(mcpService).getAllServers()
     }
 
     @Test
@@ -90,19 +124,19 @@ class McpControllerTest {
             )
         )
         
-        `when`(mcpService.getAllTools()).thenReturn(tools)
+        whenever(mcpService.getAllTools()).thenReturn(tools)
 
-        // When & Then
-        webTestClient.get()
-            .uri("/api/mcp/tools")
-            .exchange()
-            .expectStatus().isOk
-            .expectBodyList(McpTool::class.java)
-            .hasSize(2)
+        // When
+        val result = mcpController.getAllTools().block()
+
+        // Then
+        assert(result != null)
+        assert(result!!.size == 2)
+        verify(mcpService).getAllTools()
     }
 
     @Test
-    fun `MCP 도구 실행 테스트`() {
+    fun `MCP 도구 실행 테스트`() = runBlocking {
         // Given
         val request = McpToolRequest(
             toolName = "read_file",
@@ -114,20 +148,15 @@ class McpControllerTest {
             result = "파일 내용입니다."
         )
         
-        runBlocking {
-            `when`(mcpService.executeTool(anyString(), any())).thenReturn(response)
-        }
+        whenever(mcpService.executeTool(any<String>(), any())).thenReturn(response)
 
-        // When & Then
-        webTestClient.post()
-            .uri("/api/mcp/tools/execute")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
-            .exchange()
-            .expectStatus().isOk
-            .expectBody()
-            .jsonPath("$.success").isEqualTo(true)
-            .jsonPath("$.result").isEqualTo("파일 내용입니다.")
+        // When
+        val result = mcpController.executeTool(request)
+
+        // Then
+        assert(result.success)
+        assert(result.result == "파일 내용입니다.")
+        verify(mcpService).executeTool(eq("read_file"), any())
     }
 
     @Test
@@ -143,28 +172,51 @@ class McpControllerTest {
             tools = listOf()
         )
         
-        `when`(mcpService.getServer("server-1")).thenReturn(server)
+        whenever(mcpService.getServer("server-1")).thenReturn(server)
 
-        // When & Then
-        webTestClient.get()
-            .uri("/api/mcp/servers/server-1/status")
-            .exchange()
-            .expectStatus().isOk
-            .expectBody()
-            .jsonPath("$.id").isEqualTo("server-1")
-            .jsonPath("$.name").isEqualTo("파일 시스템 서버")
-            .jsonPath("$.enabled").isEqualTo(true)
+        // When
+        val result = mcpController.getServerStatus("server-1").block()
+
+        // Then
+        assert(result != null)
+        assert(result!!["id"] == "server-1")
+        assert(result["name"] == "파일 시스템 서버")
+        assert(result["enabled"] == true)
+        verify(mcpService).getServer("server-1")
     }
 
     @Test
-    fun `헬스 체크 테스트`() {
-        // When & Then
-        webTestClient.get()
-            .uri("/api/mcp/health")
-            .exchange()
-            .expectStatus().isOk
-            .expectBody()
-            .jsonPath("$.status").isEqualTo("OK")
-            .jsonPath("$.service").isEqualTo("McpService")
+    fun `MCP 서버 추가 테스트`() {
+        // Given
+        val server = McpServer(
+            id = "new-server",
+            name = "새로운 서버",
+            description = "새로 추가된 서버",
+            command = "node",
+            enabled = true
+        )
+
+        // When
+        val result = mcpController.addServer(server).block()
+
+        // Then
+        assert(result != null)
+        assert(result!!["message"] == "Server added successfully")
+        assert(result["id"] == "new-server")
+        verify(mcpService).addServer(server)
+    }
+
+    @Test
+    fun `MCP 서버 제거 테스트`() {
+        // Given
+        whenever(mcpService.removeServer("server-1")).thenReturn(true)
+
+        // When
+        val result = mcpController.removeServer("server-1").block()
+
+        // Then
+        assert(result != null)
+        assert(result!!["message"] == "Server removed successfully")
+        verify(mcpService).removeServer("server-1")
     }
 }

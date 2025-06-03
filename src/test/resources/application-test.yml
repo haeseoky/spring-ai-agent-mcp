@@ -1,0 +1,27 @@
+spring:
+  ai:
+    openai:
+      api-key: test-key
+      base-url: https://api.openai.com
+      chat:
+        options:
+          model: gpt-4
+          temperature: 0.7
+          max-tokens: 2000
+
+# MCP 설정
+app:
+  mcp:
+    config-path: mcp-servers-test.json
+    enabled: false
+
+# 서버 설정
+server:
+  port: 0  # 랜덤 포트
+
+# 로깅 설정
+logging:
+  level:
+    com.ocean.agent: DEBUG
+    org.springframework.ai: ERROR  # AI 관련 로그를 줄임
+    org.springframework.web: DEBUG
