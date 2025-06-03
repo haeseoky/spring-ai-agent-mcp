@@ -24,10 +24,10 @@ class WebConfig : WebFluxConfigurer {
      */
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/api/**")
-            .allowedOriginPatterns("*")
+            .allowedOriginPatterns("http://localhost:[*]", "http://127.0.0.1:[*]", "https://localhost:[*]")
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .allowedHeaders("*")
-            .allowCredentials(true)
+            .allowCredentials(false)  // credentials를 false로 변경
     }
     
     /**
