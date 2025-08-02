@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # MCP Proxy Server
+  mcp-proxy:
+    image: python:3.11-slim
+    container_name: mcp-proxy
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "
+      pip install mcpo uv &&
+      uvx mcpo --host 0.0.0.0 --port 8000 -- uvx mcp-server-time --local-timezone=Asia/Seoul
+      "
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Open WebUI
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui:/app/backend/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # MCP 프록시 서버 연결 설정
+      - OPENAPI_SERVERS=http://mcp-proxy:8000
+    depends_on:
+      mcp-proxy:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  open-webui:
+    driver: local
+
+networks:
+  default:
+    name: open-webui-network

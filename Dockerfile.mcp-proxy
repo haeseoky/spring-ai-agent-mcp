@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 필수 패키지 설치
+RUN pip install mcpo uv
+
+# 기본 MCP 서버 명령어 (시간 서버 예시)
+# 다른 MCP 서버를 사용하려면 CMD를 수정하세요
+CMD ["uvx", "mcpo", "--host", "0.0.0.0", "--port", "8000", "--", "uvx", "mcp-server-time", "--local-timezone=Asia/Seoul"]
+
+# 포트 노출
+EXPOSE 8000
+
+# 헬스체크
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8000/docs || exit 1

@@ -1,8 +1,10 @@
 package com.ocean.agent.service
 
 import com.ocean.agent.domain.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.stereotype.Service
@@ -35,12 +37,14 @@ class ChatService(
         )
         addMessageToConversation(conversationId, userMessage)
         
-        // AI 응답 생성
-        val response = ChatClient.create(chatModel)
-            .prompt()
-            .user(request.message)
-            .call()
-            .content()
+        // AI 응답 생성 - withContext로 블로킹 호출을 별도 스레드에서 실행
+        val response = withContext(Dispatchers.IO) {
+            ChatClient.create(chatModel)
+                .prompt()
+                .user(request.message)
+                .call()
+                .content()
+        }
         
         val responseContent = response ?: "응답을 생성할 수 없습니다."
         
@@ -78,12 +82,14 @@ class ChatService(
         val responseBuilder = StringBuilder()
         
         try {
-            // 스트리밍 응답 생성
-            val response = ChatClient.create(chatModel)
-                .prompt()
-                .user(request.message)
-                .call()
-                .content()
+            // 스트리밍 응답 생성 - withContext로 블로킹 호출을 별도 스레드에서 실행
+            val response = withContext(Dispatchers.IO) {
+                ChatClient.create(chatModel)
+                    .prompt()
+                    .user(request.message)
+                    .call()
+                    .content()
+            }
             
             // 간단한 스트리밍 시뮬레이션
             val words = response?.split(" ") ?: emptyList()

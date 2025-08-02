@@ -33,6 +33,10 @@ spring:
     activate:
       on-profile: dev
   ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: "deepseek-r1:8b"
     openai:
       api-key: ${OPENAI_API_KEY:test-key}
       base-url: https://api.openai.com
